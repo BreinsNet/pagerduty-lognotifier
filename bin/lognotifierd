@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'lognotifier'
+
+lognotifier = Lognotifier::Application.new
