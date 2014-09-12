@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Lognotifier::VERSION
   spec.authors       = ["Juan Breinlinger"]
   spec.email         = ["<juan.brein@breins.net>"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
+  spec.summary       = %q{Parse logs and notify to pagerduty on patter match}
+  spec.description   = %q{Log notifier will check for patterns on log files and send a notifications to pagerduty if there is a match}
   spec.homepage      = ""
   spec.license       = "MIT"
 
