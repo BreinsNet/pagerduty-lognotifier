@@ -1,24 +1,46 @@
-# Lognotifier
+pagerduty-lognotifier
+=====================
 
-TODO: Write a gem description
+A gem to monitor multiple log files and trigger alerts to pagerduty when specific patterns are match
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem 'lognotifier'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
+Install it yourself as:
 
     $ gem install lognotifier
 
 ## Usage
 
-TODO: Write usage instructions here
+Config file example:
+
+```
+---
+logfile: '/var/log/lognotifier.log'
+pagerduty:
+  '/var/log/syslog':
+    servicekey: 'XXXXXXX'
+    patterns: 
+      - regex: 'error1'
+        prefix: 'This is a errror' 
+      - regex: 'error2.*pattern'
+        prefix: 'This is another test' 
+  '/var/log/example':
+    servicekey: 'XXXXXXX'
+    patterns: 
+      - regex: 'asdf'
+        prefix: 'This is a asdf error' 
+      - regex: 'dfsa'
+        prefix: 'This is another dfsa error' 
+
+
+```
+
+Run it:
+
+```
+$ lognotifierd
+
+```
 
 ## Contributing
 
