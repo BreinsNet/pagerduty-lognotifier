@@ -3,14 +3,10 @@ module Lognotifier
   class Application
 
     CONFIG_FILE = "/etc/lognotifier.yaml"
-    LOG_FILE = "lognotifier.log"
     @config = nil
     @logger = nil
 
     def initialize
-
-      # Initializa logger:
-      @logger = Logger.new LOG_FILE
 
       # Load configuration:
       begin
@@ -18,7 +14,11 @@ module Lognotifier
       rescue => e
         puts "Error at opening config file, error was:"
         puts e.message
+        exit 1
       end
+
+      # Initializa logger:
+      @logger = Logger.new @config['logfile']
 
       # Main exec loop
       self.run
@@ -39,25 +39,35 @@ module Lognotifier
           # Initialize pager duty:
           pagerduty = Pagerduty.new(config['servicekey'])
 
-          @logger.error "File not exists: #{filename}" if not File.exists? filename
+          # Exit if file not exists
 
-          file = File.open(filename)
+          begin
+            file = File.open(filename)
+          rescue => e
+            @logger.error "ERROR OPENING FILE: #{filename}"
+            @logger.error "ERROR WAS: #{e.message}"
+            Thread.exit
+          end
           file.seek(0,IO::SEEK_END)
           queue = INotify::Notifier.new  
           queue.watch(filename, :modify) do
             content = file.read
-            pagerduty.trigger("#{config["message_prefix"]} #{content}") if content.match(/#{config["pattern"]}/)
+            config['patterns'].each do |pattern|
+              if content.match(/#{pattern["regex"]}/)
+                begin
+                  pagerduty.trigger("#{pattern["prefix"]} #{content}")
+                  @logger.info("ALERT TRIGGERD: #{pattern["prefix"]} #{content}" )
+                rescue => e
+                  @logger.error("FAILED TO SEND ALERT: #{pattern["prefix"]} #{content}" )
+                  @logger.error("Error: #{e.message.to_s}" )
+                end
+              end
+            end
           end
           queue.run 
-
         end
-
       end
-
       threads.each {|t| t.join}
-
     end
-
   end
-
 end
