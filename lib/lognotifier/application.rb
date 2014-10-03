@@ -27,7 +27,7 @@ module Lognotifier
 
     def run
 
-      logger.info "Starting lognotifierd"
+      @logger.info "Starting lognotifierd"
 
       threads = []
       @config['pagerduty'].each do |conf|
@@ -44,7 +44,7 @@ module Lognotifier
           # Exit if file not exists
           begin
             file = File.open(filename)
-            logger.info "Opening file #{filename} for log pattern search"
+            @logger.info "Opening file #{filename} for log pattern search"
           rescue => e
             @logger.error "ERROR OPENING FILE: #{filename}"
             @logger.error "ERROR WAS: #{e.message}"
