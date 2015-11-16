@@ -1,18 +1,15 @@
 module Lognotifier
-
   class Application
-
-    CONFIG_FILE = "/etc/lognotifier.yaml"
+    CONFIG_FILE = '/etc/lognotifier.yaml'
     @config = nil
     @logger = nil
 
     def initialize
-
       # Load configuration:
       begin
-        @config = YAML::load(File.read CONFIG_FILE)
+        @config = YAML.load(File.read CONFIG_FILE)
       rescue => e
-        puts "Error at opening config file, error was:"
+        puts 'Error at opening config file, error was:'
         puts e.message
         exit 1
       end
@@ -21,13 +18,11 @@ module Lognotifier
       @logger = Logger.new @config['logfile']
 
       # Main exec loop
-      self.run
-      
+      run
     end
 
     def run
-
-      @logger.info "Starting lognotifierd"
+      @logger.info 'Starting lognotifierd'
 
       threads = []
       @config['pagerduty'].each do |conf|
@@ -50,26 +45,37 @@ module Lognotifier
             @logger.error "ERROR WAS: #{e.message}"
             Thread.exit
           end
-          file.seek(0,IO::SEEK_END)
-          queue = INotify::Notifier.new  
+
+          # Seek to the end of the file and watch for changes
+          file.seek(0, IO::SEEK_END)
+          queue = INotify::Notifier.new
+
+          # previous to nil to record the previous line
+          previous = nil
+
+          # Watch for modified actions, read the content and alert if match
+          # When alerting also send the previous line if available
           queue.watch(filename, :modify) do
             content = file.read
             config['patterns'].each do |pattern|
-              if content.match(/#{pattern["regex"]}/)
-                begin
-                  pagerduty.trigger("#{pattern["prefix"]} #{content}")
-                  @logger.info("ALERT TRIGGERD: #{pattern["prefix"]} #{content}" )
-                rescue => e
-                  @logger.error("FAILED TO SEND ALERT: #{pattern["prefix"]} #{content}" )
-                  @logger.error("Error: #{e.message.to_s}" )
-                end
+              next unless content.match(/#{pattern["regex"]}/)
+              message = ''
+              message += previous.chomp + ' | ' unless previous.nil? || previous == content
+              message += content.chomp
+              begin
+                pagerduty.trigger("#{pattern['prefix']} #{message}")
+                @logger.info("ALERT TRIGGERD - #{pattern['prefix']}: #{message}")
+              rescue => e
+                @logger.error("FAILED TO SEND ALERT: #{pattern['prefix']} #{message}")
+                @logger.error("Error: #{e.message}")
               end
             end
+            previous = content
           end
-          queue.run 
+          queue.run
         end
       end
-      threads.each {|t| t.join}
+      threads.each(&:join)
     end
   end
 end
