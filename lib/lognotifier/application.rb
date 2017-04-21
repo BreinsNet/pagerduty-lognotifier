@@ -63,7 +63,7 @@ module Lognotifier
               message += previous.chomp + ' | ' unless previous.nil? || previous == content
               message += content.chomp
               begin
-                pagerduty.trigger("#{pattern['prefix']} #{message}")
+                pagerduty.trigger("#{pattern['prefix']}", {'details' => message})
                 @logger.info("ALERT TRIGGERD - #{pattern['prefix']}: #{message}")
               rescue => e
                 @logger.error("FAILED TO SEND ALERT: #{pattern['prefix']} #{message}")
